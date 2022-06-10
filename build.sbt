@@ -1,4 +1,4 @@
-import sbt.Keys.{resolvers, _}
+import sbt.Keys.{ resolvers, _ }
 import sbt._
 import uk.gov.hmrc.DefaultBuildSettings.addTestReportOption
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
@@ -33,9 +33,7 @@ lazy val microservice = Project(appName, file("."))
       compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
       "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
     ),
-    routesImport ++= Seq(
-      "controllers.binders.QueryStringBinders._",
-      "java.time.LocalDate")
+    routesImport ++= Seq("controllers.binders.QueryStringBinders._", "java.time.LocalDate")
   )
   .settings(publishingSettings: _*)
   .configs(IntegrationTest)
