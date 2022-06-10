@@ -27,7 +27,9 @@ object QueryStringBinders {
     override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, LocalDate]] = for {
       dateValues <- params.get(key)
       dateValue  <- dateValues.headOption
-    } yield Try(LocalDate.parse(dateValue)).toEither.left.map(_ => s"""Cannot parse parameter $key as Date: For input string: "$dateValue"""")
+    } yield Try(LocalDate.parse(dateValue)).toEither.left.map(_ =>
+      s"""Cannot parse parameter $key as Date: For input string: "$dateValue""""
+    )
 
     // $COVERAGE-OFF$
     override def unbind(key: String, value: LocalDate): String = value.format(DateTimeFormatter.ISO_LOCAL_DATE)

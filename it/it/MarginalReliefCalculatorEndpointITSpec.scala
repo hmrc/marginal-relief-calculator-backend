@@ -51,7 +51,10 @@ class MarginalReliefCalculatorEndpointITSpec
           .get()
           .futureValue
       response.status shouldBe 400
-      response.json.as[ErrorResponse] shouldBe ErrorResponse(400, "Cannot parse parameter accountingPeriodStart as Date: For input string: \"REDACTED\"")
+      response.json.as[ErrorResponse] shouldBe ErrorResponse(
+        400,
+        "Cannot parse parameter accountingPeriodStart as Date: For input string: \"REDACTED\""
+      )
     }
 
     "return unprocessable entity error when accounting period financial year is not configured" in {

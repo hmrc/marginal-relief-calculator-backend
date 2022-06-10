@@ -7,11 +7,14 @@ val appName = "marginal-relief-calculator-backend"
 
 val silencerVersion = "1.7.7"
 
+addCommandAlias("fmt", "scalafmt;test:scalafmt;it:scalafmt")
+
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(
     majorVersion := 0,
     scalaVersion := "2.12.15",
+    PlayKeys.playDefaultPort := 7100,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     scalacOptions ++= Seq(
       "-P:silencer:pathFilters=routes", // Use the silencer plugin to suppress warnings

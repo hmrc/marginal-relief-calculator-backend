@@ -16,7 +16,7 @@
 
 package controllers
 
-import calculator.{ConfigMissingError, MarginalReliefCalculator, MarginalReliefResult, SingleResult}
+import calculator.{ ConfigMissingError, MarginalReliefCalculator, MarginalReliefResult, SingleResult }
 import cats.data.NonEmptyList
 import org.mockito.ArgumentMatchersSugar
 import org.mockito.scalatest.IdiomaticMockito
@@ -25,7 +25,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import play.api.http.Status
 import play.api.mvc.Result
 import play.api.test.Helpers._
-import play.api.test.{FakeRequest, Helpers}
+import play.api.test.{ FakeRequest, Helpers }
 import uk.gov.hmrc.http.UnprocessableEntityException
 
 import java.time.LocalDate
@@ -61,12 +61,13 @@ class MarginalReliefCalculatorControllerSpec
       mockCalculator.compute(accountingPeriodStart, accountingPeriodEnd, 0, 0, None, None, None) returns Left(
         ConfigMissingError(NonEmptyList.one(0))
       )
-      try {
+      try
         controller.calculate(accountingPeriodStart, accountingPeriodEnd, 0, None, None, None, None)(fakeRequest)
-      } catch {
+      catch {
         case e: Throwable =>
           e shouldBe a[UnprocessableEntityException]
-          e.asInstanceOf[UnprocessableEntityException].getMessage shouldBe "Configuration missing for financial year(s): 0"
+          e.asInstanceOf[UnprocessableEntityException]
+            .getMessage shouldBe "Configuration missing for financial year(s): 0"
       }
     }
   }

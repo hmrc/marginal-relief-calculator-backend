@@ -16,14 +16,14 @@
 
 package controllers
 
-import calculator.{ConfigMissingError, MarginalReliefCalculator}
+import calculator.{ ConfigMissingError, MarginalReliefCalculator }
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{ Action, AnyContent, ControllerComponents }
 import uk.gov.hmrc.http.UnprocessableEntityException
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.LocalDate
-import javax.inject.{Inject, Singleton}
+import javax.inject.{ Inject, Singleton }
 import scala.concurrent.Future
 
 @Singleton()
