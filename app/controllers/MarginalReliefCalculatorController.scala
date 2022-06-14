@@ -64,6 +64,5 @@ class MarginalReliefCalculatorController @Inject() (
           )
         )
     }
-
   }
 }

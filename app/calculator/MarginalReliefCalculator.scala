@@ -19,6 +19,7 @@ package calculator
 import cats.data.NonEmptyList
 import cats.data.NonEmptyList.one
 import com.google.inject.{ Inject, Singleton }
+import config.AppConfig
 
 import java.time.temporal.ChronoUnit
 import java.time.{ LocalDate, Month }
@@ -36,7 +37,9 @@ trait MarginalReliefCalculator {
 }
 
 @Singleton
-class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends MarginalReliefCalculator {
+class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends MarginalReliefCalculator {
+
+  private val config: CalculatorConfig = appConfig.calculatorConfig
 
   override def compute(
     accountingPeriodStart: LocalDate,
@@ -48,8 +51,8 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
     associatedCompaniesFY2: Option[Int]
   ): Either[CalculatorError, MarginalReliefResult] = {
 
-    val daysInAP = daysBetweenInclusive(accountingPeriodStart, accountingPeriodEnd)
-    val fyEndForAPStartDate = financialYearEnd(accountingPeriodStart)
+    val daysInAP: Int = daysBetweenInclusive(accountingPeriodStart, accountingPeriodEnd)
+    val fyEndForAPStartDate: LocalDate = financialYearEnd(accountingPeriodStart)
 
     if (
       fyEndForAPStartDate
@@ -60,8 +63,7 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
 
       maybeFYConfig match {
         case Some(fyConfig) =>
-          val fyDays = financialYearDays(daysInAP)
-          val fyRatio = BigDecimal(daysInAP) / fyDays
+          val fyRatio = BigDecimal(daysInAP) / (if (daysInAP == 366) 366 else 365)
 
           val CTWithAdjustments(
             _,
@@ -120,8 +122,7 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
         case (Some(fy1Config), Some(fy2Config)) =>
           if (thresholdsUnchanged(fy1Config, fy2Config) && ratesUnchanged(fy1Config, fy2Config)) {
             // 1. thresholds and rates unchanged - 1 period
-            val fyDays = financialYearDays(daysInAP)
-            val fyRatio = BigDecimal(daysInAP) / fyDays
+            val fyRatio = BigDecimal(daysInAP) / (if (daysInAP == 366) 366 else 365)
             val CTWithAdjustments(
               _,
               _,
@@ -162,10 +163,24 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
             )
           } else if (thresholdsUnchanged(fy1Config, fy2Config) && !ratesUnchanged(fy1Config, fy2Config)) {
             // 2. thresholds unchanged, rates change - profits needs to apportioned, rates applied - 1 period
-            val fyDays = financialYearDays(daysInAP)
-            val fyRatio = BigDecimal(daysInAP) / fyDays
+            val fy1Ratio = fyRatioForAdjustingThresholds(
+              maybeFY1Config.flatMap(_.upperThreshold),
+              maybeFY2Config.flatMap(_.upperThreshold),
+              apdaysinfy1,
+              daysInFY(fy1),
+              daysInAP
+            )
+            val fy2Ratio = fyRatioForAdjustingThresholds(
+              maybeFY1Config.flatMap(_.upperThreshold),
+              maybeFY2Config.flatMap(_.upperThreshold),
+              apdaysinfy2,
+              daysInFY(fy2),
+              daysInAP
+            )
+
             val apfy1ratio = BigDecimal(apdaysinfy1) / daysInAP
             val apfy2ratio = BigDecimal(apdaysinfy2) / daysInAP
+
             val CTWithAdjustments(
               _,
               _,
@@ -179,7 +194,7 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
                 apfy1ratio,
                 fy1Config.lowerThreshold,
                 associatedCompanies.map(_ + 1),
-                fyRatio,
+                fy1Ratio,
                 fy1Config.smallProfitRate,
                 fy1Config.mainRate
               )
@@ -196,7 +211,7 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
                 apfy2ratio,
                 fy2Config.lowerThreshold,
                 associatedCompanies.map(_ + 1),
-                fyRatio,
+                fy2Ratio,
                 fy2Config.smallProfitRate,
                 fy2Config.mainRate
               )
@@ -206,7 +221,7 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
               associatedCompanies.map(_ + 1),
               fy1Config.lowerThreshold,
               fy1Config.upperThreshold,
-              fyRatio,
+              BigDecimal(daysInAP) / (if (daysInAP == 366) 366 else 365),
               fy1Config.marginalReliefFraction
             )
 
@@ -228,24 +243,23 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
             // 3. thresholds change, rates changed/unchanged - thresholds needs to be apportioned, profits need to be apportioned - 2 periods
             val apFY1Ratio = BigDecimal(apdaysinfy1) / daysInAP
             val apFY2Ratio = BigDecimal(apdaysinfy2) / daysInAP
-            val fyDays = financialYearDays(daysInAP)
-            val fy1Ratio = BigDecimal(apdaysinfy1) / fyDays
-            val fy2Ratio = BigDecimal(apdaysinfy2) / fyDays
+            val fy1Ratio = fyRatioForAdjustingThresholds(
+              maybeFY1Config.flatMap(_.upperThreshold),
+              maybeFY2Config.flatMap(_.upperThreshold),
+              apdaysinfy1,
+              daysInFY(fy1),
+              daysInAP
+            )
+            val fy2Ratio = fyRatioForAdjustingThresholds(
+              maybeFY1Config.flatMap(_.upperThreshold),
+              maybeFY2Config.flatMap(_.upperThreshold),
+              apdaysinfy2,
+              daysInFY(fy2),
+              daysInAP
+            )
 
-            val accFY1 = calculateAssociatedComp(
-              fy1Config,
-              fy2Config,
-              associatedCompaniesFY1,
-              associatedCompaniesFY2,
-              (acc1, _) => acc1
-            )
-            val accFY2 = calculateAssociatedComp(
-              fy1Config,
-              fy2Config,
-              associatedCompaniesFY1,
-              associatedCompaniesFY2,
-              (_, acc2) => acc2
-            )
+            val accFY1 = associatedCompaniesFY1.getOrElse(0) + 1
+            val accFY2 = associatedCompaniesFY2.getOrElse(0) + 1
 
             val CTWithAdjustments(
               adjustedProfitFY1,
@@ -332,24 +346,23 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
     }
   }
 
-  private def roundUp(value: BigDecimal): Double =
-    value.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
+// TODO: is this logic ever used?
 
-  private def calculateAssociatedComp(
-    fy1Config: FYConfig,
-    fy2Config: FYConfig,
-    associatedCompaniesFY1: Option[Int],
-    associatedCompaniesFY2: Option[Int],
-    default: (Int, Int) => Int
-  ): Int =
+//  private def calculateAssociatedComp(
+//    fy1Config: FYConfig,
+//    fy2Config: FYConfig,
+//    associatedCompaniesFY1: Option[Int],
+//    associatedCompaniesFY2: Option[Int],
+//    default: (Int, Int) => Int
+//  ): Int =
 //    val lrma1 = fy1Config.lowerThreshold
 //    val urma1 = fy1Config.upperThreshold
 //    val lrma2 = fy2Config.lowerThreshold
 //    val urma2 = fy2Config.upperThreshold
-//    if (lrma1 == lrma2 && urma1 == urma2) { // TODO: is this logic ever used?
+//    if (lrma1 == lrma2 && urma1 == urma2) {
 //      Math.max(associatedCompaniesFY1.getOrElse(0), associatedCompaniesFY2.getOrElse(0)) + 1
 //    } else {
-    default(associatedCompaniesFY1.getOrElse(0), associatedCompaniesFY2.getOrElse(0)) + 1
+//    default(associatedCompaniesFY1.getOrElse(0), associatedCompaniesFY2.getOrElse(0)) + 1
 //    }
 
   case class CTWithAdjustments(
@@ -364,75 +377,88 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
     profit: BigDecimal,
     exemptDistributions: BigDecimal,
     apFYRatio: BigDecimal,
-    lowerThreshold: Int,
+    maybeLowerThreshold: Option[Int],
     associatedCompanies: Option[Int],
     fyRatio: BigDecimal,
-    smallProfitRate: Double,
+    smallProfitRate: Option[Double],
     mainRate: Double
   ): CTWithAdjustments = {
+
     val adjustedProfit = profit * apFYRatio
     val adjustedExemptDistributions = exemptDistributions * apFYRatio
     val adjustedAugmentedProfit = adjustedProfit + adjustedExemptDistributions
-    val adjustedLowerThreshold = BigDecimal(lowerThreshold) * fyRatio / BigDecimal(
-      associatedCompanies.getOrElse(1)
-    )
-    // calculate corporation tax
-    val corporationTax = if (adjustedLowerThreshold == BigDecimal(0)) { // threshold 0 means its a flat rate year
-      BigDecimal(mainRate) * adjustedProfit
-    } else if (adjustedAugmentedProfit <= adjustedLowerThreshold) {
-      BigDecimal(smallProfitRate) * adjustedProfit
-    } else {
-      BigDecimal(mainRate) * adjustedProfit
+
+    maybeLowerThreshold match {
+      case Some(lowerThreshold) =>
+        val adjustedLT = BigDecimal(lowerThreshold) * fyRatio / BigDecimal(
+          associatedCompanies.getOrElse(1)
+        )
+        // calculate corporation tax
+        val corporationTax =
+          adjustedProfit * (if (adjustedAugmentedProfit <= adjustedLT) BigDecimal(smallProfitRate.getOrElse(0.0))
+                            else BigDecimal(mainRate))
+        CTWithAdjustments(
+          adjustedProfit,
+          adjustedExemptDistributions,
+          adjustedAugmentedProfit,
+          adjustedLT,
+          corporationTax
+        )
+      case None =>
+        CTWithAdjustments(
+          adjustedProfit,
+          adjustedExemptDistributions,
+          adjustedAugmentedProfit,
+          BigDecimal(0),
+          BigDecimal(mainRate) * adjustedProfit
+        )
     }
-    CTWithAdjustments(
-      adjustedProfit,
-      adjustedExemptDistributions,
-      adjustedAugmentedProfit,
-      adjustedLowerThreshold,
-      corporationTax
-    )
+
   }
 
   private def computeMarginalRelief(
     adjustedProfit: BigDecimal,
     adjustedAugmentedProfit: BigDecimal,
     associatedCompanies: Option[Int],
-    lowerThreshold: BigDecimal,
-    upperThreshold: BigDecimal,
+    maybeLowerThreshold: Option[Int],
+    maybeUpperThreshold: Option[Int],
     fyRatio: BigDecimal,
     marginalReliefFraction: Option[Double]
   ): BigDecimal =
-    if (lowerThreshold == BigDecimal(0)) { // threshold 0 means its a flat rate year, so no marginal relief
-      BigDecimal(0)
-    } else {
-      // adjust upper and lower thresholds
-      val adjustedLT = lowerThreshold * fyRatio / BigDecimal(
-        associatedCompanies.getOrElse(1)
-      )
-      val adjustedUT = upperThreshold * fyRatio / BigDecimal(
-        associatedCompanies.getOrElse(1)
-      )
-      // calculate marginal relief
-      if (adjustedAugmentedProfit > adjustedLT && adjustedAugmentedProfit <= adjustedUT) {
-        BigDecimal(
-          marginalReliefFraction.getOrElse(1.0)
-        ) * (adjustedUT - adjustedAugmentedProfit) * (adjustedProfit / adjustedAugmentedProfit)
-      } else {
+    (maybeLowerThreshold, maybeUpperThreshold) match {
+      case (Some(lowerThreshold), Some(upperThreshold)) =>
+        // adjust upper and lower thresholds
+        val adjustedLT = lowerThreshold * fyRatio / BigDecimal(
+          associatedCompanies.getOrElse(1)
+        )
+        val adjustedUT = upperThreshold * fyRatio / BigDecimal(
+          associatedCompanies.getOrElse(1)
+        )
+        // calculate marginal relief
+        if (adjustedAugmentedProfit > adjustedLT && adjustedAugmentedProfit <= adjustedUT) {
+          BigDecimal(
+            marginalReliefFraction.getOrElse(1.0)
+          ) * (adjustedUT - adjustedAugmentedProfit) * (adjustedProfit / adjustedAugmentedProfit)
+        } else {
+          BigDecimal(0)
+        }
+      case _ =>
         BigDecimal(0)
-      }
     }
 
   private def thresholdsUnchanged(
     fy1Config: FYConfig,
     fy2Config: FYConfig
   ): Boolean =
-    fy1Config.lowerThreshold == fy2Config.lowerThreshold && fy1Config.upperThreshold == fy2Config.upperThreshold
+    fy1Config.lowerThreshold.exists(fy2Config.lowerThreshold.contains) && fy1Config.upperThreshold.exists(
+      fy2Config.upperThreshold.contains
+    )
 
   private def ratesUnchanged(
     fy1Config: FYConfig,
     fy2Config: FYConfig
   ): Boolean =
-    fy1Config.smallProfitRate == fy2Config.smallProfitRate && fy1Config.mainRate == fy2Config.mainRate
+    fy1Config.smallProfitRate.exists(fy2Config.smallProfitRate.contains) && fy1Config.mainRate == fy2Config.mainRate
 
   private def financialYearEnd(date: LocalDate): LocalDate =
     (if (date.getMonth.getValue >= Month.JANUARY.getValue && date.getMonth.getValue <= Month.MARCH.getValue) {
@@ -441,13 +467,28 @@ class MarginalReliefCalculatorImpl @Inject() (config: CalculatorConfig) extends 
        date.plusYears(1)
      }).withMonth(Month.MARCH.getValue).withDayOfMonth(31)
 
-  private def daysBetweenInclusive(start: LocalDate, end: LocalDate): Long =
-    start.until(end, ChronoUnit.DAYS) + 1
+  private def daysBetweenInclusive(start: LocalDate, end: LocalDate): Int =
+    (start.until(end, ChronoUnit.DAYS) + 1).toInt
 
-  private def financialYearDays(daysInAP: Long): Long =
-    if (daysInAP == 366) {
-      366
-    } else {
-      365
+  private def daysInFY(year: Int): Int = {
+    val start = LocalDate.of(year, 4, 1)
+    daysBetweenInclusive(start, start.plusYears(1).withMonth(3).withDayOfMonth(31))
+  }
+
+  private def fyRatioForAdjustingThresholds(
+    maybeUpperThresholdFY1: Option[Int],
+    maybeUpperThresholdFY2: Option[Int],
+    apDaysInFY: Int,
+    fyDays: Int,
+    daysInAP: Int
+  ): BigDecimal =
+    (maybeUpperThresholdFY1, maybeUpperThresholdFY2) match {
+      case (Some(upperThresholdFY1), Some(upperThresholdFy2)) if upperThresholdFY1 != upperThresholdFy2 => // MR year
+        BigDecimal(apDaysInFY) / fyDays
+      case _ => // flat rate year
+        BigDecimal(apDaysInFY) / (if (daysInAP == 366) 366 else 365)
     }
+
+  private def roundUp(value: BigDecimal): Double =
+    value.setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble
 }

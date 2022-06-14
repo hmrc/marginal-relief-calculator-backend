@@ -16,7 +16,7 @@
 
 package config
 
-import calculator.{ CalculatorConfig, FYConfig, MarginalReliefCalculator, MarginalReliefCalculatorImpl }
+import calculator.{ MarginalReliefCalculator, MarginalReliefCalculatorImpl }
 import com.google.inject.AbstractModule
 
 class Module extends AbstractModule {
@@ -24,8 +24,5 @@ class Module extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[AppConfig]).asEagerSingleton()
     bind(classOf[MarginalReliefCalculator]).to(classOf[MarginalReliefCalculatorImpl]).asEagerSingleton()
-    bind(classOf[CalculatorConfig]).toInstance(
-      CalculatorConfig(Seq(FYConfig(2022, 0, 0, 0, 0.19, None), FYConfig(2023, 50000, 250000, 0.19, 0.25, Some(0.015))))
-    )
   }
 }
