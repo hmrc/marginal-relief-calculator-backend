@@ -35,7 +35,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         val marginalReliefCalculator = new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                                                            |appName = test
                                                                                            |calculator-config = {
-                                                                                           | fyConfigs = [
+                                                                                           | fy-configs = [
                                                                                            | ]
                                                                                            |}
                                                                                            |""".stripMargin))
@@ -56,7 +56,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2022
                                                               |     main-rate = 0.19
@@ -82,7 +82,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2023
                                                               |     lower-threshold = 50000
@@ -110,7 +110,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         val marginalReliefCalculator = new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                                                            |appName = test
                                                                                            |calculator-config = {
-                                                                                           | fyConfigs = []
+                                                                                           | fy-configs = []
                                                                                            |}
                                                                                            |""".stripMargin))
         val result = marginalReliefCalculator.compute(
@@ -132,7 +132,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2022
                                                               |     main-rate = 0.19
@@ -156,7 +156,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2023
                                                               |     lower-threshold = 50000
@@ -185,7 +185,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2023
                                                               |     lower-threshold = 50000
@@ -214,7 +214,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2023
                                                               |     lower-threshold = 50000
@@ -243,7 +243,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2023
                                                               |     lower-threshold = 50000
@@ -273,7 +273,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2023
                                                               |     lower-threshold = 50000
@@ -304,7 +304,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2023
                                                               |     lower-threshold = 50000
@@ -341,7 +341,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
                                                               |calculator-config = {
-                                                              | fyConfigs = [
+                                                              | fy-configs = [
                                                               |   {
                                                               |     year = 2022
                                                               |     main-rate = 0.19
@@ -382,7 +382,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                             |appName = test
                                                             |calculator-config = {
-                                                            | fyConfigs = [
+                                                            | fy-configs = [
                                                             |   {
                                                             |     year = 2022
                                                             |     main-rate = 0.19
@@ -422,7 +422,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                             |appName = test
                                                             |calculator-config = {
-                                                            | fyConfigs = [
+                                                            | fy-configs = [
                                                             |   {
                                                             |     year = 2023
                                                             |     lower-threshold = 50000
@@ -459,7 +459,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                             |appName = test
                                                             |calculator-config = {
-                                                            | fyConfigs = [
+                                                            | fy-configs = [
                                                             |   {
                                                             |     year = 2027
                                                             |     lower-threshold = 50000
@@ -496,7 +496,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                             |appName = test
                                                             |calculator-config = {
-                                                            | fyConfigs = [
+                                                            | fy-configs = [
                                                             |   {
                                                             |     year = 2030
                                                             |     lower-threshold = 50000
@@ -540,7 +540,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                             |appName = test
                                                             |calculator-config = {
-                                                            | fyConfigs = [
+                                                            | fy-configs = [
                                                             |   {
                                                             |     year = 2023
                                                             |     lower-threshold = 50000
