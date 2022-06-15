@@ -7,7 +7,7 @@ val appName = "marginal-relief-calculator-backend"
 
 val silencerVersion = "1.7.7"
 
-addCommandAlias("fmt", "scalafmt;test:scalafmt;it:scalafmt")
+addCommandAlias("fmt", "scalafmt;scalafmtSbt;test:scalafmt;it:scalafmt")
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)

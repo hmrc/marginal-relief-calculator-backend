@@ -18,9 +18,9 @@ package calculator
 
 case class FYConfig(
   year: Int,
-  lowerThreshold: Int,
-  upperThreshold: Int,
-  smallProfitRate: Double,
+  lowerThreshold: Option[Int],
+  upperThreshold: Option[Int],
+  smallProfitRate: Option[Double],
   mainRate: Double,
   marginalReliefFraction: Option[Double]
 )
