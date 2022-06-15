@@ -32,7 +32,7 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
         val appConfig = appConfigFromStr("""
                                            |appName = test
                                            |calculator-config = {
-                                           | fyConfigs = [
+                                           | fy-configs = [
                                            | ]
                                            |}
                                            |""".stripMargin)
@@ -42,7 +42,7 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
         val appConfig = appConfigFromStr("""
                                            |appName = test
                                            |calculator-config = {
-                                           | fyConfigs = [
+                                           | fy-configs = [
                                            |   {
                                            |     year = 2022
                                            |     main-rate = 0.19
@@ -56,7 +56,7 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
         val appConfig = appConfigFromStr("""
                                            |appName = test
                                            |calculator-config = {
-                                           | fyConfigs = [
+                                           | fy-configs = [
                                            |   {
                                            |     year = 2023
                                            |     lower-threshold = 50000
@@ -76,7 +76,7 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
         val appConfig = appConfigFromStr("""
                                            |appName = test
                                            |calculator-config = {
-                                           | fyConfigs = [
+                                           | fy-configs = [
                                            |   {
                                            |     year = 2022
                                            |     main-rate = 0.19
@@ -104,7 +104,7 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
           appConfigFromStr("""
                              |appName = test
                              |calculator-config = {
-                             | fyConfigs = [
+                             | fy-configs = [
                              |   {
                              |     year = 2022
                              |   }

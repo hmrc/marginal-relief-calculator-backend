@@ -30,7 +30,7 @@ class AppConfig @Inject() (config: Configuration) {
     CalculatorConfig(
       config
         .get[Configuration]("calculator-config")
-        .get[Seq[Configuration]]("fyConfigs")
+        .get[Seq[Configuration]]("fy-configs")
         .map { configuration =>
           val year = configuration.get[Int]("year")
           val lowerThreshold = configuration.getOptional[Int]("lower-threshold")
