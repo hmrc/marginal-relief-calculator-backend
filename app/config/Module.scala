@@ -16,13 +16,10 @@
 
 package config
 
-import calculator.{ MarginalReliefCalculator, MarginalReliefCalculatorImpl }
 import com.google.inject.AbstractModule
 
 class Module extends AbstractModule {
 
-  override def configure(): Unit = {
+  override def configure(): Unit =
     bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[MarginalReliefCalculator]).to(classOf[MarginalReliefCalculatorImpl]).asEagerSingleton()
-  }
 }
