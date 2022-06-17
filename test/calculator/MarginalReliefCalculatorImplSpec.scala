@@ -334,9 +334,147 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
           None,
           None
         )
-        result shouldBe Right(SingleResult(6250.0, 25.0, 4755.14, 19.02, 1494.86))
+        result shouldBe Right(
+          DualResult(
+            MarginalReliefByYear(2023, 3125.0, 25.0, 2377.57, 19.02, 747.43),
+            MarginalReliefByYear(2024, 3125.0, 25.0, 2377.57, 19.02, 747.43),
+            25.0,
+            19.02
+          )
+        )
       }
-      "when 2 associated companies in second accounting period, FY1 with only main rate and FY2 with marginal relief - FY2 profits above upper threshold" in {
+      "when FY1 with MR rate and FY2 with flat rate and associated companies in FY1, profits within threshold for FY1" in {
+        // Calculation for a company with short AP
+        val marginalReliefCalculator =
+          new MarginalReliefCalculatorImpl(appConfigFromStr("""
+                                                              |appName = test
+                                                              |calculator-config = {
+                                                              | fy-configs = [
+                                                              |   {
+                                                              |     year = 2023
+                                                              |     lower-threshold = 50000
+                                                              |     upper-threshold = 250000
+                                                              |     small-profit-rate = 0.19
+                                                              |     main-rate = 0.25
+                                                              |     marginal-relief-fraction = 0.015
+                                                              |   },
+                                                              |   {
+                                                              |     year = 2024
+                                                              |     main-rate = 0.19
+                                                              |   }
+                                                              | ]
+                                                              |}
+                                                              |""".stripMargin))
+
+        val result = marginalReliefCalculator.compute(
+          LocalDate.of(2023, 6, 1),
+          LocalDate.of(2024, 5, 31),
+          70000,
+          0,
+          None,
+          Some(2),
+          None
+        )
+        result shouldBe Right(
+          DualResult(
+            MarginalReliefByYear(2023, 14583.33, 25.0, 14416.67, 24.71, 166.67),
+            MarginalReliefByYear(2024, 2216.67, 19.0, 2216.67, 19.0, 0.0),
+            24.0,
+            23.76
+          )
+        )
+      }
+      "when FY1 with MR rate and FY2 with MR rate (no change in config), associated companies in (FY1, FY2) and profits within thresholds" in {
+        // Calculation for a company with short AP
+        val marginalReliefCalculator =
+          new MarginalReliefCalculatorImpl(appConfigFromStr("""
+                                                              |appName = test
+                                                              |calculator-config = {
+                                                              | fy-configs = [
+                                                              |   {
+                                                              |     year = 2023
+                                                              |     lower-threshold = 50000
+                                                              |     upper-threshold = 250000
+                                                              |     small-profit-rate = 0.19
+                                                              |     main-rate = 0.25
+                                                              |     marginal-relief-fraction = 0.015
+                                                              |   },
+                                                              |   {
+                                                              |     year = 2024
+                                                              |     lower-threshold = 50000
+                                                              |     upper-threshold = 250000
+                                                              |     small-profit-rate = 0.19
+                                                              |     main-rate = 0.25
+                                                              |     marginal-relief-fraction = 0.015
+                                                              |   },
+                                                              | ]
+                                                              |}
+                                                              |""".stripMargin))
+
+        val result = marginalReliefCalculator.compute(
+          LocalDate.of(2023, 10, 1),
+          LocalDate.of(2024, 9, 30),
+          60000,
+          0,
+          None,
+          Some(2),
+          Some(3)
+        )
+        result shouldBe Right(
+          DualResult(
+            MarginalReliefByYear(2023, 7500.0, 25.0, 7481.25, 24.94, 18.75),
+            MarginalReliefByYear(2024, 7500.0, 25.0, 7481.25, 24.94, 18.75),
+            25.0,
+            24.94
+          )
+        )
+      }
+      "when FY1 with MR rate and FY2 with MR rate (change in config), associated companies in (FY1, FY2) and profits within thresholds" in {
+        // Calculation for a company with short AP
+        val marginalReliefCalculator =
+          new MarginalReliefCalculatorImpl(appConfigFromStr("""
+                                                              |appName = test
+                                                              |calculator-config = {
+                                                              | fy-configs = [
+                                                              |   {
+                                                              |     year = 2023
+                                                              |     lower-threshold = 50000
+                                                              |     upper-threshold = 250000
+                                                              |     small-profit-rate = 0.19
+                                                              |     main-rate = 0.25
+                                                              |     marginal-relief-fraction = 0.015
+                                                              |   },
+                                                              |   {
+                                                              |     year = 2024
+                                                              |     lower-threshold = 50000
+                                                              |     upper-threshold = 300000
+                                                              |     small-profit-rate = 0.19
+                                                              |     main-rate = 0.25
+                                                              |     marginal-relief-fraction = 0.015
+                                                              |   },
+                                                              | ]
+                                                              |}
+                                                              |""".stripMargin))
+
+        val result = marginalReliefCalculator.compute(
+          LocalDate.of(2023, 10, 1),
+          LocalDate.of(2024, 9, 30),
+          60000,
+          0,
+          None,
+          Some(2),
+          Some(3)
+        )
+        result shouldBe Right(
+          DualResult(
+            MarginalReliefByYear(2023, 7500.0, 25.0, 7325.0, 24.42, 175.0),
+            MarginalReliefByYear(2024, 7500.0, 25.0, 7385.96, 24.62, 114.04),
+            25.0,
+            24.52
+          )
+        )
+      }
+      "when 2 associated companies in second accounting period, FY1 with flat rate and FY2 with MR rate - FY2 profits above upper threshold" in {
         val marginalReliefCalculator =
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                               |appName = test
@@ -377,7 +515,7 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         )
       }
     }
-    "when 2 associated in the second accounting period, FY1 with only main rate and FY2 with marginal relief - FY2 profits between thresholds" in {
+    "when 2 associated in the second accounting period, FY1 with flat rate and FY2 with MR rate - FY2 profits between thresholds" in {
       val marginalReliefCalculator =
         new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                             |appName = test
@@ -452,7 +590,14 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         None,
         None
       )
-      result shouldBe Right(SingleResult(13750.0, 25.0, 13637.5, 24.8, 112.5))
+      result shouldBe Right(
+        DualResult(
+          MarginalReliefByYear(2023, 6875.0, 25.0, 6818.75, 24.8, 56.25),
+          MarginalReliefByYear(2024, 6875.0, 25.0, 6818.75, 24.8, 56.25),
+          25.0,
+          24.8
+        )
+      )
     }
     "when no of associated companies and rates change, no change in thresholds" in {
       val marginalReliefCalculator =
@@ -489,7 +634,14 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         None,
         None
       )
-      result shouldBe Right(SingleResult(11588.11, 25.75, 11513.11, 25.58, 75.0))
+      result shouldBe Right(
+        DualResult(
+          MarginalReliefByYear(2027, 2797.13, 25.0, 2778.48, 24.83, 18.65),
+          MarginalReliefByYear(2028, 8790.98, 26.0, 8734.63, 25.83, 56.35),
+          25.75,
+          25.58
+        )
+      )
     }
     "when no of associated companies and thresholds change, no change in rates" in {
       val marginalReliefCalculator =
@@ -571,7 +723,12 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         None
       )
       result shouldBe Right(
-        SingleResult(25750.68, 25.75, 23500.68, 23.5, 2250.0)
+        DualResult(
+          MarginalReliefByYear(2023, 6232.88, 25.0, 5671.92, 22.75, 560.96),
+          MarginalReliefByYear(2024, 19517.81, 26.0, 17828.77, 23.75, 1689.04),
+          25.75,
+          23.5
+        )
       )
     }
   }
