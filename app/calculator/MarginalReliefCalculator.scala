@@ -60,7 +60,7 @@ class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends Marg
         .isEqual(accountingPeriodEnd) || fyEndForAPStartDate.isAfter(accountingPeriodEnd)
     ) {
       // one financial year
-      val maybeFYConfig = config.fyConfigs.find(_.year == accountingPeriodStart.getYear)
+      val maybeFYConfig = findFYConfig(accountingPeriodStart.getYear)
 
       maybeFYConfig match {
         case Some(fyConfig) =>
@@ -105,7 +105,6 @@ class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends Marg
               roundUp(marginalRelief)
             )
           )
-
         case None => Left(ConfigMissingError(one(accountingPeriodStart.getYear)))
       }
     } else {
@@ -116,8 +115,8 @@ class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends Marg
       val apdaysinfy1 = daysBetweenInclusive(accountingPeriodStart, fyEndForAPStartDate)
       val apdaysinfy2 = daysInAP - apdaysinfy1
 
-      val maybeFY1Config = config.fyConfigs.find(_.year == fy1)
-      val maybeFY2Config = config.fyConfigs.find(_.year == fy2)
+      val maybeFY1Config = findFYConfig(fy1)
+      val maybeFY2Config = findFYConfig(fy2)
 
       (maybeFY1Config, maybeFY2Config) match {
         case (Some(fy1Config), Some(fy2Config)) =>
@@ -229,16 +228,14 @@ class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends Marg
               roundUp(((ctFY1 - mr1 + ctFY2 - mr2) / profit) * 100)
             )
           )
-
-        case (Some(_), None) =>
-          Left(ConfigMissingError(one(fy2)))
-        case (None, Some(_)) =>
-          Left(ConfigMissingError(one(fy1)))
-        case (None, None) =>
+        case _ =>
           Left(ConfigMissingError(NonEmptyList.of(fy1, fy2)))
       }
     }
   }
+
+  private def findFYConfig(year: Int): Option[FYConfig] =
+    config.fyConfigs.sortBy(_.year)(Ordering[Int].reverse).find(_.year <= year)
 
   def calculateAssociatedComp(
     fy1Config: FYConfig,
