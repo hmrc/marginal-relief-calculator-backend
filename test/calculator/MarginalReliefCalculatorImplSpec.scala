@@ -51,61 +51,6 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
         result shouldBe Left(ConfigMissingError(NonEmptyList.one(2022)))
       }
 
-      "when straddles two financial years and year two config missing, return error" in {
-        val marginalReliefCalculator =
-          new MarginalReliefCalculatorImpl(appConfigFromStr("""
-                                                              |appName = test
-                                                              |calculator-config = {
-                                                              | fy-configs = [
-                                                              |   {
-                                                              |     year = 2022
-                                                              |     main-rate = 0.19
-                                                              |   }
-                                                              | ]
-                                                              |}
-                                                              |""".stripMargin))
-
-        val result = marginalReliefCalculator.compute(
-          LocalDate.of(2023, 1, 1),
-          LocalDate.of(2023, 12, 31),
-          1,
-          0,
-          None,
-          None,
-          None
-        )
-        result shouldBe Left(ConfigMissingError(NonEmptyList.one(2023)))
-      }
-
-      "when straddles two financial years and year one config missing, return error" in {
-        val marginalReliefCalculator =
-          new MarginalReliefCalculatorImpl(appConfigFromStr("""
-                                                              |appName = test
-                                                              |calculator-config = {
-                                                              | fy-configs = [
-                                                              |   {
-                                                              |     year = 2023
-                                                              |     lower-threshold = 50000
-                                                              |     upper-threshold = 250000
-                                                              |     small-profit-rate = 0.19
-                                                              |     main-rate = 0.25
-                                                              |     marginal-relief-fraction = 0.015
-                                                              |   }
-                                                              | ]
-                                                              |}
-                                                              |""".stripMargin))
-        val result = marginalReliefCalculator.compute(
-          LocalDate.of(2023, 1, 1),
-          LocalDate.of(2023, 12, 31),
-          1,
-          0,
-          None,
-          None,
-          None
-        )
-        result shouldBe Left(ConfigMissingError(NonEmptyList.one(2022)))
-      }
-
       "when straddles two financial years and both year configs missing, return error" in {
         val marginalReliefCalculator = new MarginalReliefCalculatorImpl(appConfigFromStr("""
                                                                                            |appName = test
@@ -127,6 +72,36 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
     }
 
     "accounting period falls in a single financial year" should {
+
+      "when config is missing for an accounting period year, fallback to the nearest config" in {
+        val marginalReliefCalculator =
+          new MarginalReliefCalculatorImpl(appConfigFromStr("""
+                                                              |appName = test
+                                                              |calculator-config = {
+                                                              | fy-configs = [
+                                                              |   {
+                                                              |     year = 2022
+                                                              |     main-rate = 0.1
+                                                              |   },
+                                                              |   {
+                                                              |     year = 2023
+                                                              |     main-rate = 0.2
+                                                              |   }
+                                                              | ]
+                                                              |}
+                                                              |""".stripMargin))
+        val result = marginalReliefCalculator.compute(
+          LocalDate.of(2024, 4, 1),
+          LocalDate.of(2025, 3, 31),
+          100000,
+          0,
+          None,
+          None,
+          None
+        )
+        result shouldBe Right(SingleResult(20000.0, 20.0, 20000.0, 20.0, 0))
+      }
+
       "when account period falls in FY with only main rate, apply main rate with no marginal relief" in {
         val marginalReliefCalculator =
           new MarginalReliefCalculatorImpl(appConfigFromStr("""
@@ -298,6 +273,114 @@ class MarginalReliefCalculatorImplSpec extends AnyWordSpec with Matchers {
       }
     }
     "accounting period straddles financial period" should {
+
+      "when config is empty, return error" in {
+        // Calculation for a company with short AP
+        val marginalReliefCalculator =
+          new MarginalReliefCalculatorImpl(appConfigFromStr("""
+                                                              |appName = test
+                                                              |calculator-config = {
+                                                              | fy-configs = [
+                                                              | ]
+                                                              |}
+                                                              |""".stripMargin))
+
+        val result = marginalReliefCalculator.compute(
+          LocalDate.of(2023, 1, 1),
+          LocalDate.of(2023, 12, 31),
+          10000,
+          0,
+          None,
+          None,
+          None
+        )
+        result shouldBe Left(ConfigMissingError(NonEmptyList.of(2022, 2023)))
+      }
+
+      "when config missing for one of the years, fallback to the nearest config for the missing year" in {
+        // Calculation for a company with short AP
+        val marginalReliefCalculator =
+          new MarginalReliefCalculatorImpl(appConfigFromStr("""
+                                                              |appName = test
+                                                              |calculator-config = {
+                                                              | fy-configs = [
+                                                              |   {
+                                                              |     year = 2022
+                                                              |     main-rate = 0.19
+                                                              |   },
+                                                              |   {
+                                                              |     year = 2023
+                                                              |     lower-threshold = 50000
+                                                              |     upper-threshold = 250000
+                                                              |     small-profit-rate = 0.19
+                                                              |     main-rate = 0.25
+                                                              |     marginal-relief-fraction = 0.015
+                                                              |   }
+                                                              | ]
+                                                              |}
+                                                              |""".stripMargin))
+
+        val result = marginalReliefCalculator.compute(
+          LocalDate.of(2024, 1, 1),
+          LocalDate.of(2024, 12, 31),
+          10000,
+          0,
+          None,
+          None,
+          None
+        )
+        result shouldBe Right(
+          DualResult(
+            MarginalReliefByYear(2023, 472.4, 19.0, 472.4, 19.0, 0.0),
+            MarginalReliefByYear(2024, 1427.6, 19.0, 1427.6, 19.0, 0.0),
+            19.0,
+            19.0
+          )
+        )
+      }
+
+      "when config missing for both years, fallback to the nearest config" in {
+        // Calculation for a company with short AP
+        val marginalReliefCalculator =
+          new MarginalReliefCalculatorImpl(appConfigFromStr("""
+                                                              |appName = test
+                                                              |calculator-config = {
+                                                              | fy-configs = [
+                                                              |   {
+                                                              |     year = 2022
+                                                              |     main-rate = 0.19
+                                                              |   },
+                                                              |   {
+                                                              |     year = 2023
+                                                              |     lower-threshold = 50000
+                                                              |     upper-threshold = 250000
+                                                              |     small-profit-rate = 0.19
+                                                              |     main-rate = 0.25
+                                                              |     marginal-relief-fraction = 0.015
+                                                              |   }
+                                                              | ]
+                                                              |}
+                                                              |""".stripMargin))
+
+        val result = marginalReliefCalculator.compute(
+          LocalDate.of(2025, 1, 1),
+          LocalDate.of(2025, 12, 31),
+          10000,
+          0,
+          None,
+          None,
+          None
+        )
+        result shouldBe Right(
+          DualResult(
+            MarginalReliefByYear(2024, 468.49, 19.0, 468.49, 19.0, 0.0),
+            MarginalReliefByYear(2025, 1431.51, 19.0, 1431.51, 19.0, 0.0),
+            19.0,
+            19.0
+          )
+        )
+      }
+
       "when no associated companies throughout the accounting period, no change in rates or thresholds" in {
         // Calculation for a company with short AP
         val marginalReliefCalculator =
