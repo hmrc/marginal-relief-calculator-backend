@@ -11,7 +11,7 @@ To start the service locally, execute the following command
 
 To run locally using Service Manager
 
-```sm --start MARGINAL_RELIEF_CALCULATOR_BACKEND -f```
+```sm --start MARGINAL_RELIEF_CALCULATOR_BACKEND```
 
 ## REST API Details
 
@@ -27,8 +27,8 @@ Calculates the marginal relief, based on the financial year config and the user 
 
 |Name|Type|Description|Required|Format|Example Value|
 |----|----|-----------|--------|------|-------------|
-|accountingPeriodStartDate|Date|The accounting period start date|Yes|YYYY-MM-DD|2023-01-01|
-|accountingPeriodEndDate|Date|The accounting period end date|Yes|YYYY-MM-DD|2023-01-01|
+|accountingPeriodStart|Date|The accounting period start date|Yes|YYYY-MM-DD|2023-01-01|
+|accountingPeriodEnd|Date|The accounting period end date|Yes|YYYY-MM-DD|2023-01-01|
 |profit|Integer|The total taxable profit|Yes||100000|
 |exemptDistributions|Integer|Exempt Distributions|No||10000|
 |associatedCompanies|Integer|Number of associated companies|No||1|
@@ -48,6 +48,7 @@ When successful, the result can either be calculations for a single year or two 
 ```json
  {
      "type": "SingleResult",
+     "year": 2022,
      "effectiveTaxRateBeforeMR": 25,
      "corporationTaxBeforeMR":15000,
      "effectiveTaxRate":20.25,

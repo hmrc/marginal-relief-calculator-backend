@@ -25,7 +25,7 @@ class MarginalReliefCalculatorEndpointITSpec
           .get()
           .futureValue
       response.status shouldBe 200
-      response.body shouldBe """{"type":"SingleResult","effectiveTaxRateBeforeMR":25,"corporationTaxBeforeMR":15000,"effectiveTaxRate":20.25,"marginalRelief":2850,"corporationTax":12150}""".stripMargin
+      response.body shouldBe """{"type":"SingleResult","effectiveTaxRateBeforeMR":25,"corporationTaxBeforeMR":15000,"year":2023,"effectiveTaxRate":20.25,"marginalRelief":2850,"corporationTax":12150}""".stripMargin
     }
 
     "return bad request error when required parameters are missing (profit missing)" in {
@@ -69,7 +69,7 @@ class MarginalReliefCalculatorEndpointITSpec
           .get()
           .futureValue
       response.status shouldBe 422
-      response.json.as[ErrorResponse] shouldBe ErrorResponse(422, "Configuration missing for financial year(s): 2020")
+      response.json.as[ErrorResponse] shouldBe ErrorResponse(422, "Configuration missing for financial year: 2020")
     }
   }
 }

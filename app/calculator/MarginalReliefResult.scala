@@ -38,6 +38,7 @@ object MarginalReliefResult {
 }
 
 case class SingleResult(
+  year: Int,
   corporationTaxBeforeMR: Double,
   effectiveTaxRateBeforeMR: Double,
   corporationTax: Double,

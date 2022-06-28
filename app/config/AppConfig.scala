@@ -16,7 +16,7 @@
 
 package config
 
-import calculator.{ CalculatorConfig, FYConfig }
+import calculator.CalculatorConfig
 import play.api.Configuration
 
 import javax.inject.{ Inject, Singleton }
@@ -27,18 +27,11 @@ class AppConfig @Inject() (config: Configuration) {
   val appName: String = config.get[String]("appName")
 
   val calculatorConfig: CalculatorConfig =
-    CalculatorConfig(
-      config
-        .get[Configuration]("calculator-config")
-        .get[Seq[Configuration]]("fy-configs")
-        .map { configuration =>
-          val year = configuration.get[Int]("year")
-          val lowerThreshold = configuration.getOptional[Int]("lower-threshold")
-          val upperThreshold = configuration.getOptional[Int]("upper-threshold")
-          val smallProfitRate = configuration.getOptional[Double]("small-profit-rate")
-          val mainRate = configuration.get[Double]("main-rate")
-          val marginalReliefFraction = configuration.getOptional[Double]("marginal-relief-fraction")
-          FYConfig(year, lowerThreshold, upperThreshold, smallProfitRate, mainRate, marginalReliefFraction)
-        }
-    )
+    CalculatorConfigParser
+      .parse(config)
+      .fold(
+        invalidConfigError =>
+          throw new IllegalArgumentException(invalidConfigError.map(_.message).toList.mkString(", ")),
+        fyConfigs => CalculatorConfig(fyConfigs)
+      )
 }

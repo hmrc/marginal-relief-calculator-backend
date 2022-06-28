@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-package calculator
+package config
 
-sealed trait CalculatorError
-case class ConfigMissingError(year: Int) extends CalculatorError
+case class InvalidConfigError(message: String)
