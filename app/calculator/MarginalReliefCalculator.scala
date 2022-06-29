@@ -255,7 +255,7 @@ class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends Marg
             daysInFY(fy2),
             daysInAP
           )
-          val accFY2 = associatedCompaniesFY2.getOrElse(0) + 1
+          val accFY2 = associatedCompanies.map(_ + 1).orElse(associatedCompaniesFY2.map(_ + 1)).getOrElse(1)
           val ctFY2 =
             computeCorporationTax(
               adjustedProfitFY2,
@@ -303,7 +303,7 @@ class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends Marg
             daysInFY(fy1),
             daysInAP
           )
-          val accFY1 = associatedCompaniesFY1.getOrElse(0) + 1
+          val accFY1 = associatedCompanies.map(_ + 1).orElse(associatedCompaniesFY1.map(_ + 1)).getOrElse(1)
           val ctFY1 =
             computeCorporationTax(
               adjustedProfitFY1,
