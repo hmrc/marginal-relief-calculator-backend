@@ -17,7 +17,7 @@
 package controllers
 
 import calculator.{ ConfigMissingError, MarginalReliefCalculator, MarginalReliefResult, SingleResult }
-import cats.data.NonEmptyList
+import cats.syntax.validated._
 import org.mockito.ArgumentMatchersSugar
 import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.matchers.should.Matchers
@@ -46,28 +46,26 @@ class MarginalReliefCalculatorControllerSpec
 
     "return calculator result successfully" in new Fixture {
 
-      mockCalculator.compute(accountingPeriodStart, accountingPeriodEnd, 0, 0, None, None, None) returns Right(
-        SingleResult(0, 0, 0, 0, 0)
-      )
+      mockCalculator.compute(accountingPeriodStart, accountingPeriodEnd, 0, 0, None, None, None) returns
+        SingleResult(1970, 0, 0, 0, 0, 0).validNel
 
       val result: Future[Result] =
         controller.calculate(accountingPeriodStart, accountingPeriodEnd, 0, None, None, None, None)(fakeRequest)
       status(result) shouldBe Status.OK
-      contentAsJson(result).as[MarginalReliefResult] shouldBe SingleResult(0, 0, 0, 0, 0)
+      contentAsJson(result).as[MarginalReliefResult] shouldBe SingleResult(1970, 0, 0, 0, 0, 0)
     }
 
     "throw error when config missing for financial year" in new Fixture {
 
-      mockCalculator.compute(accountingPeriodStart, accountingPeriodEnd, 0, 0, None, None, None) returns Left(
-        ConfigMissingError(NonEmptyList.one(0))
-      )
+      mockCalculator.compute(accountingPeriodStart, accountingPeriodEnd, 0, 0, None, None, None) returns
+        ConfigMissingError(0).invalidNel
+
       try
         controller.calculate(accountingPeriodStart, accountingPeriodEnd, 0, None, None, None, None)(fakeRequest)
       catch {
         case e: Throwable =>
           e shouldBe a[UnprocessableEntityException]
-          e.asInstanceOf[UnprocessableEntityException]
-            .getMessage shouldBe "Configuration missing for financial year(s): 0"
+          e.asInstanceOf[UnprocessableEntityException].getMessage shouldBe "Configuration missing for financial year: 0"
       }
     }
   }

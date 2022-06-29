@@ -41,28 +41,35 @@ class MarginalReliefCalculatorController @Inject() (
     associatedCompaniesFY1: Option[Int],
     associatedCompaniesFY2: Option[Int]
   ): Action[AnyContent] = Action.async { _ =>
-    marginalReliefCalculator.compute(
-      accountingPeriodStart,
-      accountingPeriodEnd,
-      BigDecimal(profit),
-      BigDecimal(exemptDistributions.getOrElse(0.0)),
-      associatedCompanies,
-      associatedCompaniesFY1,
-      associatedCompaniesFY2
-    ) match {
-      case Left(error) =>
-        error match {
-          case ConfigMissingError(years) =>
-            throw new UnprocessableEntityException(
-              "Configuration missing for financial year(s): " + years.toList.mkString(",")
+    marginalReliefCalculator
+      .compute(
+        accountingPeriodStart,
+        accountingPeriodEnd,
+        BigDecimal(profit),
+        BigDecimal(exemptDistributions.getOrElse(0.0)),
+        associatedCompanies,
+        associatedCompaniesFY1,
+        associatedCompaniesFY2
+      )
+      .fold(
+        errors =>
+          throw new UnprocessableEntityException(
+            "Failed to calculate marginal relief: " + errors
+              .map { case ConfigMissingError(year) =>
+                throw new UnprocessableEntityException(
+                  s"Configuration missing for financial year: $year"
+                )
+              }
+              .toList
+              .mkString(", ")
+          ),
+        success =>
+          Future.successful(
+            Ok(
+              Json.toJson(success)
             )
-        }
-      case Right(value) =>
-        Future.successful(
-          Ok(
-            Json.toJson(value)
           )
-        )
-    }
+      )
   }
+
 }

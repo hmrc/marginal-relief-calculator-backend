@@ -16,11 +16,17 @@
 
 package calculator
 
-case class FYConfig(
+sealed trait FYConfig {
+  def year: Int
+  def mainRate: Double
+}
+
+case class FlatRateConfig(year: Int, mainRate: Double) extends FYConfig
+case class MarginalReliefConfig(
   year: Int,
-  lowerThreshold: Option[Int],
-  upperThreshold: Option[Int],
-  smallProfitRate: Option[Double],
+  lowerThreshold: Int,
+  upperThreshold: Int,
+  smallProfitRate: Double,
   mainRate: Double,
-  marginalReliefFraction: Option[Double]
-)
+  marginalReliefFraction: Double
+) extends FYConfig

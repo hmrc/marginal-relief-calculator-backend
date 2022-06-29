@@ -16,7 +16,7 @@
 
 package config
 
-import calculator.{ CalculatorConfig, FYConfig }
+import calculator.{ CalculatorConfig, FlatRateConfig, MarginalReliefConfig }
 import com.typesafe.config.ConfigFactory
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,51 +28,7 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
 
   "AppConfig tests" - {
     "calculatorConfig" - {
-      "should parse empty config" in {
-        val appConfig = appConfigFromStr("""
-                                           |appName = test
-                                           |calculator-config = {
-                                           | fy-configs = [
-                                           | ]
-                                           |}
-                                           |""".stripMargin)
-        appConfig.calculatorConfig shouldBe CalculatorConfig(Seq.empty)
-      }
-      "should parse config with flat rate only" in {
-        val appConfig = appConfigFromStr("""
-                                           |appName = test
-                                           |calculator-config = {
-                                           | fy-configs = [
-                                           |   {
-                                           |     year = 2022
-                                           |     main-rate = 0.19
-                                           |   }
-                                           | ]
-                                           |}
-                                           |""".stripMargin)
-        appConfig.calculatorConfig shouldBe CalculatorConfig(Seq(FYConfig(2022, None, None, None, 0.19, None)))
-      }
-      "should parse config with MR rate only" in {
-        val appConfig = appConfigFromStr("""
-                                           |appName = test
-                                           |calculator-config = {
-                                           | fy-configs = [
-                                           |   {
-                                           |     year = 2023
-                                           |     lower-threshold = 50000
-                                           |     upper-threshold = 250000
-                                           |     small-profit-rate = 0.19
-                                           |     main-rate = 0.25
-                                           |     marginal-relief-fraction = 0.015
-                                           |   }
-                                           | ]
-                                           |}
-                                           |""".stripMargin)
-        appConfig.calculatorConfig shouldBe CalculatorConfig(
-          Seq(FYConfig(2023, Some(50000), Some(250000), Some(0.19), 0.25, Some(0.015)))
-        )
-      }
-      "should parse config with both flat and MR rates" in {
+      "should parse config successfully" in {
         val appConfig = appConfigFromStr("""
                                            |appName = test
                                            |calculator-config = {
@@ -94,26 +50,26 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
                                            |""".stripMargin)
         appConfig.calculatorConfig shouldBe CalculatorConfig(
           Seq(
-            FYConfig(2022, None, None, None, 0.19, None),
-            FYConfig(2023, Some(50000), Some(250000), Some(0.19), 0.25, Some(0.015))
+            FlatRateConfig(2022, 0.19),
+            MarginalReliefConfig(2023, 50000, 250000, 0.19, 0.25, 0.015)
           )
         )
       }
-      "should error when config has missing mandatory attributes" in {
+      "should error when config is invalid" in {
         val result = Try {
           appConfigFromStr("""
                              |appName = test
                              |calculator-config = {
                              | fy-configs = [
                              |   {
-                             |     year = 2022
+                             |     invalid = 2022
                              |   }
                              | ]
                              |}
                              |""".stripMargin)
         }
         result.isFailure shouldBe true
-        result.failed.get.getMessage shouldBe "String: 5: No configuration setting found for key 'main-rate'"
+        result.failed.get.getMessage shouldBe "year is missing or invalid, main-rate is missing or invalid"
       }
     }
   }
