@@ -69,7 +69,7 @@ class AppConfigSpec extends AnyFreeSpec with Matchers {
                              |""".stripMargin)
         }
         result.isFailure shouldBe true
-        result.failed.get.getMessage shouldBe "year is missing or invalid, main-rate is missing or invalid"
+        result.failed.get.getMessage shouldBe "Failed to parse calculator-config"
       }
     }
   }
