@@ -19,8 +19,8 @@ package config
 import calculator.{ FYConfig, FlatRateConfig, MarginalReliefConfig }
 import cats.data.ValidatedNel
 import cats.syntax.apply._
-import cats.syntax.validated._
 import cats.syntax.traverse._
+import cats.syntax.validated._
 import play.api.{ ConfigLoader, Configuration }
 
 import scala.util.{ Failure, Success, Try }
@@ -85,7 +85,10 @@ object CalculatorConfigParser {
   ): ValidationResult[Option[T]] =
     Try(configuration.getOptional[T](key)) match {
       case Success(maybeValue) => maybeValue.validNel
-      case Failure(_)          => InvalidConfigError(s"$key is invalid").invalidNel
+      case Failure(_) =>
+        InvalidConfigError(
+          s"$key is invalid${getForYearOrEmpty(configuration)}"
+        ).invalidNel
     }
 
   private def validated[T](configuration: Configuration, key: String)(implicit
@@ -93,6 +96,12 @@ object CalculatorConfigParser {
   ): ValidationResult[T] =
     Try(configuration.get[T](key)) match {
       case Success(value) => value.validNel
-      case Failure(_)     => InvalidConfigError(s"$key is missing or invalid").invalidNel
+      case Failure(_) =>
+        InvalidConfigError(
+          s"$key is missing or invalid${getForYearOrEmpty(configuration)}"
+        ).invalidNel
     }
+
+  private def getForYearOrEmpty(configuration: Configuration): String =
+    Try(configuration.get[Int]("year").toString).map(" for year " + _).getOrElse("")
 }
