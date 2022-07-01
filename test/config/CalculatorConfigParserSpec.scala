@@ -135,7 +135,7 @@ class CalculatorConfigParserSpec extends AnyFreeSpec with Matchers {
                                  |}
                                  |""".stripMargin)
         CalculatorConfigParser.parse(configuration) shouldBe InvalidConfigError(
-          "main-rate is missing or invalid"
+          "main-rate is missing or invalid for year 2022"
         ).invalidNel
       }
 
@@ -227,7 +227,7 @@ class CalculatorConfigParserSpec extends AnyFreeSpec with Matchers {
 
         CalculatorConfigParser.parse(configuration) shouldBe Invalid(
           NonEmptyList.of(
-            InvalidConfigError("marginal-relief-fraction is invalid")
+            InvalidConfigError("marginal-relief-fraction is invalid for year 2023")
           )
         )
       }
