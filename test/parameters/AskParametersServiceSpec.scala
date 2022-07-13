@@ -27,7 +27,7 @@ import play.api.Configuration
 
 import java.time.LocalDate
 
-class RequiredParametersServiceSpec extends AnyFreeSpec with Matchers {
+class AskParametersServiceSpec extends AnyFreeSpec with Matchers {
 
   "associatedCompaniesParameters" - {
 
@@ -67,7 +67,7 @@ class RequiredParametersServiceSpec extends AnyFreeSpec with Matchers {
         LocalDate.of(2024, 3, 31),
         0,
         None
-      ) shouldBe OnePeriod(Period(LocalDate.of(2023, 4, 1), LocalDate.of(2024, 3, 31))).validNel
+      ) shouldBe AskFull.validNel
     }
 
     "when no config exists for accounting period spanning financial years, returns error" in {
@@ -102,7 +102,7 @@ class RequiredParametersServiceSpec extends AnyFreeSpec with Matchers {
         LocalDate.of(2023, 3, 31),
         0,
         None
-      ) shouldBe NotRequired.validNel
+      ) shouldBe DontAsk.validNel
     }
 
     "when accounting period spans Flat Rate years, returns NotRequired result" in {
@@ -126,10 +126,10 @@ class RequiredParametersServiceSpec extends AnyFreeSpec with Matchers {
         LocalDate.of(2023, 12, 31),
         0,
         None
-      ) shouldBe NotRequired.validNel
+      ) shouldBe DontAsk.validNel
     }
 
-    "when accounting period spans Marginal Rate years, returns NotRequired result" in {
+    "when accounting period spans Marginal Rate years and there is no change in thresholds, returns RequiresFull result" in {
       val requiredParametersService = buildRequiredParametersService("""
                                                                        |appName = test
                                                                        |calculator-config = {
@@ -158,7 +158,109 @@ class RequiredParametersServiceSpec extends AnyFreeSpec with Matchers {
         LocalDate.of(2024, 12, 31),
         0,
         None
-      ) shouldBe TwoPeriods(
+      ) shouldBe AskFull.validNel
+    }
+
+    "when accounting period spans Marginal Rate years and there is change in upper threshold, returns RequiresBothParts result" in {
+      val requiredParametersService = buildRequiredParametersService("""
+                                                                       |appName = test
+                                                                       |calculator-config = {
+                                                                       | fy-configs = [
+                                                                       |   {
+                                                                       |     year = 2023
+                                                                       |     lower-threshold = 50000
+                                                                       |     upper-threshold = 250000
+                                                                       |     small-profit-rate = 0.19
+                                                                       |     main-rate = 0.25
+                                                                       |     marginal-relief-fraction = 0.015
+                                                                       |   },
+                                                                       |   {
+                                                                       |     year = 2024
+                                                                       |     lower-threshold = 50000
+                                                                       |     upper-threshold = 300000
+                                                                       |     small-profit-rate = 0.19
+                                                                       |     main-rate = 0.25
+                                                                       |     marginal-relief-fraction = 0.015
+                                                                       |   }
+                                                                       | ]
+                                                                       |}
+                                                                       |""".stripMargin)
+      requiredParametersService.associatedCompaniesParameters(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 12, 31),
+        0,
+        None
+      ) shouldBe AskBothParts(
+        Period(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31)),
+        Period(LocalDate.of(2024, 4, 1), LocalDate.of(2024, 12, 31))
+      ).validNel
+    }
+
+    "when accounting period spans Marginal Rate years and there is change in lower threshold, returns RequiresBothParts result" in {
+      val requiredParametersService = buildRequiredParametersService("""
+                                                                       |appName = test
+                                                                       |calculator-config = {
+                                                                       | fy-configs = [
+                                                                       |   {
+                                                                       |     year = 2023
+                                                                       |     lower-threshold = 50000
+                                                                       |     upper-threshold = 250000
+                                                                       |     small-profit-rate = 0.19
+                                                                       |     main-rate = 0.25
+                                                                       |     marginal-relief-fraction = 0.015
+                                                                       |   },
+                                                                       |   {
+                                                                       |     year = 2024
+                                                                       |     lower-threshold = 60000
+                                                                       |     upper-threshold = 250000
+                                                                       |     small-profit-rate = 0.19
+                                                                       |     main-rate = 0.25
+                                                                       |     marginal-relief-fraction = 0.015
+                                                                       |   }
+                                                                       | ]
+                                                                       |}
+                                                                       |""".stripMargin)
+      requiredParametersService.associatedCompaniesParameters(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 12, 31),
+        0,
+        None
+      ) shouldBe AskBothParts(
+        Period(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31)),
+        Period(LocalDate.of(2024, 4, 1), LocalDate.of(2024, 12, 31))
+      ).validNel
+    }
+
+    "when accounting period spans Marginal Rate years and there is change in both thresholds, returns RequiresBothParts result" in {
+      val requiredParametersService = buildRequiredParametersService("""
+                                                                       |appName = test
+                                                                       |calculator-config = {
+                                                                       | fy-configs = [
+                                                                       |   {
+                                                                       |     year = 2023
+                                                                       |     lower-threshold = 50000
+                                                                       |     upper-threshold = 250000
+                                                                       |     small-profit-rate = 0.19
+                                                                       |     main-rate = 0.25
+                                                                       |     marginal-relief-fraction = 0.015
+                                                                       |   },
+                                                                       |   {
+                                                                       |     year = 2024
+                                                                       |     lower-threshold = 60000
+                                                                       |     upper-threshold = 300000
+                                                                       |     small-profit-rate = 0.19
+                                                                       |     main-rate = 0.25
+                                                                       |     marginal-relief-fraction = 0.015
+                                                                       |   }
+                                                                       | ]
+                                                                       |}
+                                                                       |""".stripMargin)
+      requiredParametersService.associatedCompaniesParameters(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 12, 31),
+        0,
+        None
+      ) shouldBe AskBothParts(
         Period(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31)),
         Period(LocalDate.of(2024, 4, 1), LocalDate.of(2024, 12, 31))
       ).validNel
@@ -189,7 +291,7 @@ class RequiredParametersServiceSpec extends AnyFreeSpec with Matchers {
         LocalDate.of(2023, 12, 31),
         0,
         None
-      ) shouldBe OnePeriod(Period(LocalDate.of(2023, 4, 1), LocalDate.of(2023, 12, 31))).validNel
+      ) shouldBe AskOnePart(Period(LocalDate.of(2023, 4, 1), LocalDate.of(2023, 12, 31))).validNel
     }
 
     "when accounting period spans Marginal Rate and Flat Rate years, returns OnePeriod result" in {
@@ -217,12 +319,12 @@ class RequiredParametersServiceSpec extends AnyFreeSpec with Matchers {
         LocalDate.of(2024, 12, 31),
         0,
         None
-      ) shouldBe OnePeriod(Period(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31))).validNel
+      ) shouldBe AskOnePart(Period(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 3, 31))).validNel
     }
   }
 
-  private def buildRequiredParametersService(config: String): RequiredParametersService =
-    new RequiredParametersServiceImpl(appConfigFromStr(config))
+  private def buildRequiredParametersService(config: String): AskParametersService =
+    new AskParametersServiceImpl(appConfigFromStr(config))
 
   private def appConfigFromStr(configStr: String): AppConfig =
     new AppConfig(Configuration(ConfigFactory.parseString(configStr).withFallback(ConfigFactory.load())))

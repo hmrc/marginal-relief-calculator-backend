@@ -21,11 +21,11 @@ import play.api.libs.json.{ Format, Json, OFormat, __ }
 
 import java.time.LocalDate
 
-sealed trait AssociatedCompaniesRequirement
+sealed trait AssociatedCompaniesParameter
 
-object AssociatedCompaniesRequirement {
-  implicit val format: OFormat[AssociatedCompaniesRequirement] =
-    derived.flat.oformat[AssociatedCompaniesRequirement]((__ \ "type").format[String])
+object AssociatedCompaniesParameter {
+  implicit val format: OFormat[AssociatedCompaniesParameter] =
+    derived.flat.oformat[AssociatedCompaniesParameter]((__ \ "type").format[String])
 }
 
 case class Period(start: LocalDate, end: LocalDate)
@@ -33,6 +33,7 @@ object Period {
   implicit val format: Format[Period] = Json.format[Period]
 }
 
-case object NotRequired extends AssociatedCompaniesRequirement
-case class OnePeriod(period: Period) extends AssociatedCompaniesRequirement
-case class TwoPeriods(period1: Period, period2: Period) extends AssociatedCompaniesRequirement
+case object DontAsk extends AssociatedCompaniesParameter
+case object AskFull extends AssociatedCompaniesParameter
+case class AskOnePart(period: Period) extends AssociatedCompaniesParameter
+case class AskBothParts(period1: Period, period2: Period) extends AssociatedCompaniesParameter

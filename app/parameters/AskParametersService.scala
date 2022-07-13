@@ -26,8 +26,8 @@ import config.AppConfig
 
 import java.time.LocalDate
 
-@ImplementedBy(classOf[RequiredParametersServiceImpl])
-trait RequiredParametersService {
+@ImplementedBy(classOf[AskParametersServiceImpl])
+trait AskParametersService {
 
   type ValidationResult[A] = ValidatedNel[ParameterError, A]
 
@@ -36,11 +36,11 @@ trait RequiredParametersService {
     accountingPeriodEnd: LocalDate,
     profit: Double,
     exemptDistributions: Option[Double]
-  ): ValidationResult[AssociatedCompaniesRequirement]
+  ): ValidationResult[AssociatedCompaniesParameter]
 }
 
 @Singleton
-class RequiredParametersServiceImpl @Inject() (appConfig: AppConfig) extends RequiredParametersService {
+class AskParametersServiceImpl @Inject() (appConfig: AppConfig) extends AskParametersService {
 
   private val config: CalculatorConfig = appConfig.calculatorConfig
 
@@ -49,16 +49,16 @@ class RequiredParametersServiceImpl @Inject() (appConfig: AppConfig) extends Req
     accountingPeriodEnd: LocalDate,
     profit: Double,
     exemptDistributions: Option[Double]
-  ): ValidationResult[AssociatedCompaniesRequirement] = {
+  ): ValidationResult[AssociatedCompaniesParameter] = {
     val fyEndForAccountingPeriodStart: LocalDate = financialYearEnd(accountingPeriodStart)
     if (fyEndForAccountingPeriodStart.isEqualOrAfter(accountingPeriodEnd)) {
       val fy = fyEndForAccountingPeriodStart.minusYears(1).getYear
       val maybeFYConfig = findFYConfig(fy)
       maybeFYConfig.map {
         case _: FlatRateConfig =>
-          NotRequired
+          DontAsk
         case _: MarginalReliefConfig =>
-          OnePeriod(Period(accountingPeriodStart, accountingPeriodEnd))
+          AskFull
       }
     } else {
       val fy1 = fyEndForAccountingPeriodStart.minusYears(1).getYear
@@ -68,16 +68,19 @@ class RequiredParametersServiceImpl @Inject() (appConfig: AppConfig) extends Req
 
       (maybeFY1Config, maybeFY2Config).mapN {
         case (_: FlatRateConfig, _: FlatRateConfig) =>
-          NotRequired
-        case (_: MarginalReliefConfig, _: MarginalReliefConfig) =>
-          TwoPeriods(
-            Period(accountingPeriodStart, fyEndForAccountingPeriodStart),
-            Period(fyEndForAccountingPeriodStart.plusDays(1), accountingPeriodEnd)
-          )
+          DontAsk
+        case (c1: MarginalReliefConfig, c2: MarginalReliefConfig) =>
+          if (c1.upperThreshold == c2.upperThreshold && c1.lowerThreshold == c2.lowerThreshold)
+            AskFull
+          else
+            AskBothParts(
+              Period(accountingPeriodStart, fyEndForAccountingPeriodStart),
+              Period(fyEndForAccountingPeriodStart.plusDays(1), accountingPeriodEnd)
+            )
         case (_: FlatRateConfig, _: MarginalReliefConfig) =>
-          OnePeriod(Period(fyEndForAccountingPeriodStart.plusDays(1), accountingPeriodEnd))
+          AskOnePart(Period(fyEndForAccountingPeriodStart.plusDays(1), accountingPeriodEnd))
         case (_: MarginalReliefConfig, _: FlatRateConfig) =>
-          OnePeriod(Period(accountingPeriodStart, fyEndForAccountingPeriodStart))
+          AskOnePart(Period(accountingPeriodStart, fyEndForAccountingPeriodStart))
       }
     }
   }

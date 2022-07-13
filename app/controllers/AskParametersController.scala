@@ -16,7 +16,7 @@
 
 package controllers
 
-import parameters.{ ConfigMissingError, RequiredParametersService }
+import parameters.{ AskParametersService, ConfigMissingError }
 import play.api.libs.json.Json
 import play.api.mvc.{ Action, AnyContent, ControllerComponents }
 import uk.gov.hmrc.http.UnprocessableEntityException
@@ -27,7 +27,7 @@ import javax.inject.{ Inject, Singleton }
 import scala.concurrent.Future
 
 @Singleton()
-class RequiredParametersController @Inject() (parametersService: RequiredParametersService, cc: ControllerComponents)
+class AskParametersController @Inject() (parametersService: AskParametersService, cc: ControllerComponents)
     extends BackendController(cc) {
 
   def associatedCompanies(

@@ -21,7 +21,7 @@ import org.mockito.ArgumentMatchersSugar
 import org.mockito.scalatest.IdiomaticMockito
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import parameters.{ AssociatedCompaniesRequirement, ConfigMissingError, OnePeriod, Period, RequiredParametersService }
+import parameters.{ AskOnePart, AskParametersService, AssociatedCompaniesParameter, ConfigMissingError, Period }
 import play.api.http.Status
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.Helpers.{ GET, contentAsJson, status, _ }
@@ -30,14 +30,13 @@ import uk.gov.hmrc.http.UnprocessableEntityException
 
 import java.time.LocalDate
 
-class RequiredParametersControllerSpec
-    extends AnyFreeSpec with Matchers with IdiomaticMockito with ArgumentMatchersSugar {
+class AskParametersControllerSpec extends AnyFreeSpec with Matchers with IdiomaticMockito with ArgumentMatchersSugar {
   trait Fixture {
     val accountingPeriodStart: LocalDate = LocalDate.ofEpochDay(0)
     val accountingPeriodEnd: LocalDate = LocalDate.ofEpochDay(1)
     val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, "/params/associated-companies")
-    val mockRequiredParametersService: RequiredParametersService = mock[RequiredParametersService]
-    val controller = new RequiredParametersController(mockRequiredParametersService, Helpers.stubControllerComponents())
+    val mockRequiredParametersService: AskParametersService = mock[AskParametersService]
+    val controller = new AskParametersController(mockRequiredParametersService, Helpers.stubControllerComponents())
   }
 
   "GET /params/associated-companies" - {
@@ -47,12 +46,12 @@ class RequiredParametersControllerSpec
         accountingPeriodEnd,
         0,
         None
-      ) returns OnePeriod(Period(accountingPeriodStart, accountingPeriodEnd)).validNel
+      ) returns AskOnePart(Period(accountingPeriodStart, accountingPeriodEnd)).validNel
 
       val result = controller.associatedCompanies(accountingPeriodStart, accountingPeriodEnd, 0, None)(fakeRequest)
 
       status(result) shouldBe Status.OK
-      contentAsJson(result).as[AssociatedCompaniesRequirement] shouldBe OnePeriod(
+      contentAsJson(result).as[AssociatedCompaniesParameter] shouldBe AskOnePart(
         Period(accountingPeriodStart, accountingPeriodEnd)
       )
     }
