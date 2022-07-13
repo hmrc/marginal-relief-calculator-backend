@@ -20,7 +20,7 @@ To run locally using Service Manager
 Calculates the marginal relief, based on the financial year config and the user parameters.
 
 **Method:** `GET`
- 
+
 **Path:** `/marginal-relief-calculator-backend/calculate`
 
 **Query Params**
@@ -36,7 +36,7 @@ Calculates the marginal relief, based on the financial year config and the user 
 |associatedCompaniesFY2|Integer|Number of associated companies for financial year 2, when accounting period spans 2 financial years|No||1|
 
 **Responses**
- 
+
 |Status|Code|Response Body|Field Path|Field Message|
 |------|----|-------------|----------|-------------|
 |200| OK| Marginal relief caculation result as JSON| | |
@@ -79,6 +79,67 @@ When successful, the result can either be calculations for a single year or two 
       },
       "effectiveTaxRateBeforeMR": 23,
       "effectiveTaxRate": 22
+  }
+  ```
+
+### Parameters - associated companies
+
+Returns tbe associated companies parameter requirements, given the accounting period, profit and exempt distributions
+
+**Method:** `GET`
+
+**Path:** `/marginal-relief-calculator-backend/params/associated-companies`
+
+**Query Params**
+
+|Name|Type|Description|Required|Format|Example Value|
+|----|----|-----------|--------|------|-------------|
+|accountingPeriodStart|Date|The accounting period start date|Yes|YYYY-MM-DD|2023-01-01|
+|accountingPeriodEnd|Date|The accounting period end date|Yes|YYYY-MM-DD|2023-01-01|
+|profit|Integer|The total taxable profit|Yes||100000|
+|exemptDistributions|Integer|Exempt Distributions|No||10000|
+
+**Responses**
+
+|Status|Code|Response Body|Field Path|Field Message|
+|------|----|-------------|----------|-------------|
+|200| OK| AssociatedCompaniesRequirement as JSON| | |
+
+When successful, the result can either be calculations for a single year or two years (when accounting period spans multiple years and there is change in rates/thresholds)
+
+
+*Not Required*
+
+```json
+  {
+    "type": "NotRequired"
+  }
+```
+
+*OnePeriod Result*
+
+```json
+ {
+     "type": "OnePeriod",
+     "period": {
+        "start": "2020-01-01",
+        "end": "2020-12-31"
+     }
+ }
+ ```
+ *TwoPeriod Result*
+
+ ```json
+  {
+      "type": "TwoPeriod",
+      "period1": {
+         "start": "2020-01-01",
+         "end": "2020-03-31"
+      },
+      "period2": {
+         "start": "2020-04-01",
+         "end": "2020-12-31"
+      }
   }
   ```
 

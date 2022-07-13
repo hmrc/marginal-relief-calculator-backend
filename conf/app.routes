@@ -1,3 +1,4 @@
 # microservice specific routes
 
-GET        /calculate             controllers.MarginalReliefCalculatorController.calculate(accountingPeriodStart: LocalDate, accountingPeriodEnd: LocalDate, profit: Double, exemptDistributions: Option[Double], associatedCompanies: Option[Int], associatedCompaniesFY1: Option[Int], associatedCompaniesFY2: Option[Int])
+GET        /calculate                               controllers.MarginalReliefCalculatorController.calculate(accountingPeriodStart: LocalDate, accountingPeriodEnd: LocalDate, profit: Double, exemptDistributions: Option[Double], associatedCompanies: Option[Int], associatedCompaniesFY1: Option[Int], associatedCompaniesFY2: Option[Int])
+GET        /params/associated-companies             controllers.RequiredParametersController.associatedCompanies(accountingPeriodStart: LocalDate, accountingPeriodEnd: LocalDate, profit: Double, exemptDistributions: Option[Double])
