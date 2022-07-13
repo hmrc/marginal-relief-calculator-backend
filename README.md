@@ -82,9 +82,9 @@ When successful, the result can either be calculations for a single year or two 
   }
   ```
 
-### Parameters - associated companies
+### Required Parameters - Associated Companies
 
-Returns tbe associated companies parameter requirements, given the accounting period, profit and exempt distributions
+Returns the associated companies parameter requirements, given the accounting period, profit and exempt distributions
 
 **Method:** `GET`
 
@@ -105,8 +105,10 @@ Returns tbe associated companies parameter requirements, given the accounting pe
 |------|----|-------------|----------|-------------|
 |200| OK| AssociatedCompaniesRequirement as JSON| | |
 
-When successful, the result can either be calculations for a single year or two years (when accounting period spans multiple years and there is change in rates/thresholds)
-
+When successful, the result can either be NotRequired, OnePeriod or TwoPeriod results. When the requirement is for one period (OnePeriod type), the calculate request expects the associated companies
+value via the associatedCompanies query param. When the requirement is for two notional periods (TwoPeriod type), the calculate request expected associated companies via associatedCompaniesFY1
+and associatedCompaniesFY2 parameters. Note that one period may be retuned when the accounting period falls in a single financial year or one of the notional accounting periods falls under
+Marginal Relief year.
 
 *Not Required*
 
