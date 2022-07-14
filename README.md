@@ -88,7 +88,7 @@ Returns the associated companies parameter requirements, given the accounting pe
 
 **Method:** `GET`
 
-**Path:** `/marginal-relief-calculator-backend/params/associated-companies`
+**Path:** `/marginal-relief-calculator-backend/ask-params/associated-companies`
 
 **Query Params**
 
