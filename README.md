@@ -55,10 +55,10 @@ When successful, the result can either be calculations for a single year or two 
      "marginalRelief":2850,
      "corporationTax":12150
  }
- ```
+```
  *Dual Result*
 
- ```json
+```json
   {
       "type": "DualResult",
       "year1": {
@@ -80,7 +80,7 @@ When successful, the result can either be calculations for a single year or two 
       "effectiveTaxRateBeforeMR": 23,
       "effectiveTaxRate": 22
   }
-  ```
+```
 
 ### Required Parameters - Associated Companies
 
@@ -103,37 +103,44 @@ Returns the associated companies parameter requirements, given the accounting pe
 
 |Status|Code|Response Body|Field Path|Field Message|
 |------|----|-------------|----------|-------------|
-|200| OK| AssociatedCompaniesRequirement as JSON| | |
+|200| OK| AssociatedCompaniesParameter as JSON| | |
 
-When successful, the result can either be NotRequired, OnePeriod or TwoPeriod results. When the requirement is for one period (OnePeriod type), the calculate request expects the associated companies
-value via the associatedCompanies query param. When the requirement is for two notional periods (TwoPeriod type), the calculate request expected associated companies via associatedCompaniesFY1
-and associatedCompaniesFY2 parameters. Note that one period may be retuned when the accounting period falls in a single financial year or one of the notional accounting periods falls under
-Marginal Relief year.
+When successful, the result can either be DontAsk, AskFull, AskOnePart or AskBothParts results. When the requirement is for one period (AskOnePart or AskFull type), the calculate request expects the associated companies
+value via the associatedCompanies query param. When the requirement is for two notional periods (AskBothParts type), the calculate request expected associated companies via associatedCompaniesFY1
+and associatedCompaniesFY2 parameters.
 
-*Not Required*
+*DontAsk result*
 
 ```json
   {
-    "type": "NotRequired"
+    "type": "DontAsk"
   }
 ```
 
-*OnePeriod Result*
+*AskFull result*
 
 ```json
  {
-     "type": "OnePeriod",
+     "type": "AskFull"
+ }
+```
+
+*AskOnePart result*
+
+```json
+ {
+     "type": "AskOnePart",
      "period": {
         "start": "2020-01-01",
         "end": "2020-12-31"
      }
  }
- ```
- *TwoPeriod Result*
+```
+*AskBothParts result*
 
- ```json
+```json
   {
-      "type": "TwoPeriod",
+      "type": "AskBothParts",
       "period1": {
          "start": "2020-01-01",
          "end": "2020-03-31"
@@ -143,5 +150,5 @@ Marginal Relief year.
          "end": "2020-12-31"
       }
   }
-  ```
+```
 
