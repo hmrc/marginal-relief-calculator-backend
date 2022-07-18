@@ -61,7 +61,7 @@ class MarginalReliefCalculatorImpl @Inject() (appConfig: AppConfig) extends Marg
 
     if (fyEndForAPStartDate.isEqualOrAfter(accountingPeriodEnd)) {
       // one financial year
-      val fy = accountingPeriodStart.getYear
+      val fy = fyEndForAPStartDate.minusYears(1).getYear
       val maybeFYConfig = findFYConfig(fy)
       maybeFYConfig.map {
         case flatRateConfig: FlatRateConfig =>

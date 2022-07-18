@@ -20,7 +20,7 @@ To run locally using Service Manager
 Calculates the marginal relief, based on the financial year config and the user parameters.
 
 **Method:** `GET`
- 
+
 **Path:** `/marginal-relief-calculator-backend/calculate`
 
 **Query Params**
@@ -36,7 +36,7 @@ Calculates the marginal relief, based on the financial year config and the user 
 |associatedCompaniesFY2|Integer|Number of associated companies for financial year 2, when accounting period spans 2 financial years|No||1|
 
 **Responses**
- 
+
 |Status|Code|Response Body|Field Path|Field Message|
 |------|----|-------------|----------|-------------|
 |200| OK| Marginal relief caculation result as JSON| | |
@@ -55,10 +55,10 @@ When successful, the result can either be calculations for a single year or two 
      "marginalRelief":2850,
      "corporationTax":12150
  }
- ```
+```
  *Dual Result*
 
- ```json
+```json
   {
       "type": "DualResult",
       "year1": {
@@ -80,5 +80,75 @@ When successful, the result can either be calculations for a single year or two 
       "effectiveTaxRateBeforeMR": 23,
       "effectiveTaxRate": 22
   }
-  ```
+```
+
+### Required Parameters - Associated Companies
+
+Returns the associated companies parameter requirements, given the accounting period, profit and exempt distributions
+
+**Method:** `GET`
+
+**Path:** `/marginal-relief-calculator-backend/ask-params/associated-companies`
+
+**Query Params**
+
+|Name|Type|Description|Required|Format|Example Value|
+|----|----|-----------|--------|------|-------------|
+|accountingPeriodStart|Date|The accounting period start date|Yes|YYYY-MM-DD|2023-01-01|
+|accountingPeriodEnd|Date|The accounting period end date|Yes|YYYY-MM-DD|2023-01-01|
+|profit|Integer|The total taxable profit|Yes||100000|
+|exemptDistributions|Integer|Exempt Distributions|No||10000|
+
+**Responses**
+
+|Status|Code|Response Body|Field Path|Field Message|
+|------|----|-------------|----------|-------------|
+|200| OK| AssociatedCompaniesParameter as JSON| | |
+
+When successful, the result can either be DontAsk, AskFull, AskOnePart or AskBothParts results. When the requirement is for one period (AskOnePart or AskFull type), the calculate request expects the associated companies
+value via the associatedCompanies query param. When the requirement is for two notional periods (AskBothParts type), the calculate request expected associated companies via associatedCompaniesFY1
+and associatedCompaniesFY2 parameters.
+
+*DontAsk result*
+
+```json
+  {
+    "type": "DontAsk"
+  }
+```
+
+*AskFull result*
+
+```json
+ {
+     "type": "AskFull"
+ }
+```
+
+*AskOnePart result*
+
+```json
+ {
+     "type": "AskOnePart",
+     "period": {
+        "start": "2020-01-01",
+        "end": "2020-12-31"
+     }
+ }
+```
+*AskBothParts result*
+
+```json
+  {
+      "type": "AskBothParts",
+      "period1": {
+         "start": "2020-01-01",
+         "end": "2020-03-31"
+      },
+      "period2": {
+         "start": "2020-04-01",
+         "end": "2020-12-31"
+      }
+  }
+```
 
